@@ -22,3 +22,56 @@ For the latest documentation, visit: [PlanDev Documentation](https://nasa-ammos.
 
 See [SeqDev Actions docs](https://nasa-ammos.github.io/plandev-docs/sequencing/actions/) for more information - full API reference
 coming soon.
+
+## Action results: `data` vs `report`
+
+An action returns an `ActionResult`:
+
+```ts
+type ActionResult = {
+  status: 'FAILED' | 'SUCCESS';
+  data: any;        // machine-readable output (rendered as raw JSON in the "Results" block)
+  report?: string;  // optional human-facing Markdown summary (rendered in the "Report" block)
+};
+```
+
+- **`data`** is the structured, machine-readable output. The UI shows it as pretty-printed JSON in the **Results** block.
+- **`report`** is an optional **Markdown** string for the things a person needs to read and click. The UI renders it in a **Report** block shown above Results — so you no longer need to stuff human-readable output into logs.
+
+### Example
+
+```ts
+export async function main(parameters, settings, actionsAPI) {
+  // ... do work ...
+  return {
+    status: 'SUCCESS',
+    data: { violations: 2, checked: 148 },
+    report: [
+      '## Constraint check complete',
+      '',
+      'Checked **148** constraints — **2 violations** found.',
+      '',
+      '| Constraint | Result |',
+      '| --- | --- |',
+      '| Power margin | OK |',
+      '| Thermal window | **Violated** at 04:12Z |',
+      '',
+      'See the [full report](https://example.com/runs/123) for details.',
+    ].join('\n'),
+  };
+}
+```
+
+### Supported Markdown
+
+The Report block accepts a curated, GitHub-flavored Markdown subset:
+
+- Headings, paragraphs, line breaks, horizontal rules
+- **Bold**, *italic*, ~~strikethrough~~, `inline code` and fenced code blocks
+- Ordered/unordered lists, blockquotes
+- Tables
+- Hyperlinks (open in a new tab)
+
+### Not supported (stripped for safety)
+
+The UI **sanitizes** report content because it is rendered in other users' browsers. The following are removed: raw HTML and inline styles (`<span>`, `style="..."`), `<script>` and event handlers, `javascript:`/`data:` links, images and video (`<img>`/`<video>`), `<iframe>`/embeds, and any markup that loads a remote resource. Treat `report` as untrusted display content — only the supported subset above is rendered.

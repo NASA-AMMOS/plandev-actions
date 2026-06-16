@@ -6,6 +6,18 @@ export * from './schema';
 export type ActionResult = {
   status: 'FAILED' | 'SUCCESS';
   data: any;
+  /**
+   * Optional human-facing summary, written in Markdown, rendered in the action
+   * run's "Report" block in the UI (above the raw Results). Use this for the
+   * legible, click-through output a person reads — links, tables, formatted text.
+   *
+   * Supported: headings, bold/italic/strikethrough, inline code & code blocks,
+   * lists, tables, blockquotes, horizontal rules, and hyperlinks. The UI
+   * sanitizes this content: scripts, event handlers, raw HTML (including inline
+   * styles), images, video, iframes, and any other remote-resource-loading
+   * markup are stripped.
+   */
+  report?: string;
   [key: string]: any;
 };
 
