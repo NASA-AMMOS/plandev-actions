@@ -49,12 +49,12 @@ export async function main(parameters, settings, actionsAPI) {
     report: [
       '## Constraint check complete',
       '',
-      'Checked **148** constraints — **2 violations** found.',
+      'Checked **148** constraints — <span style="color: #c00">2 violations</span> found.',
       '',
       '| Constraint | Result |',
       '| --- | --- |',
-      '| Power margin | OK |',
-      '| Thermal window | **Violated** at 04:12Z |',
+      '| Power margin | <span style="color: green">OK</span> |',
+      '| Thermal window | <span style="color: #c00">**Violated** at 04:12Z</span> |',
       '',
       'See the [full report](https://example.com/runs/123) for details.',
     ].join('\n'),
@@ -71,7 +71,8 @@ The Report block accepts a curated, GitHub-flavored Markdown subset:
 - Ordered/unordered lists, blockquotes
 - Tables
 - Hyperlinks (open in a new tab)
+- Inline text color via `<span style="color: ...">` — `color` and `background-color` only, with validated color values (named, `#hex`, `rgb()`/`hsl()`). Works in text and inside table cells.
 
 ### Not supported (stripped for safety)
 
-The UI **sanitizes** report content because it is rendered in other users' browsers. The following are removed: raw HTML and inline styles (`<span>`, `style="..."`), `<script>` and event handlers, `javascript:`/`data:` links, images and video (`<img>`/`<video>`), `<iframe>`/embeds, and any markup that loads a remote resource. Treat `report` as untrusted display content — only the supported subset above is rendered.
+The UI **sanitizes** report content because it is rendered in other users' browsers. The following are removed: `<script>` and event handlers, `javascript:`/`data:` links, images and video (`<img>`/`<video>`), `<iframe>`/embeds, other raw HTML, and **any CSS other than `color`/`background-color`** (so a `style` can't carry `url(...)`, `position`, etc.). Treat `report` as untrusted display content — only the supported subset above is rendered.

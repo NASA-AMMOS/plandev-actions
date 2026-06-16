@@ -12,10 +12,11 @@ export type ActionResult = {
    * legible, click-through output a person reads — links, tables, formatted text.
    *
    * Supported: headings, bold/italic/strikethrough, inline code & code blocks,
-   * lists, tables, blockquotes, horizontal rules, and hyperlinks. The UI
-   * sanitizes this content: scripts, event handlers, raw HTML (including inline
-   * styles), images, video, iframes, and any other remote-resource-loading
-   * markup are stripped.
+   * lists, tables, blockquotes, horizontal rules, hyperlinks, and inline text
+   * color via `<span style="color: ...">` (only `color`/`background-color`, with
+   * validated color values). The UI sanitizes this content: scripts, event
+   * handlers, images, video, iframes, other raw HTML, and any other CSS are
+   * stripped.
    */
   report?: string;
   [key: string]: any;
