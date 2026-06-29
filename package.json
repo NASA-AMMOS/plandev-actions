@@ -1,6 +1,6 @@
 {
   "name": "@nasa-jpl/aerie-actions",
-  "version": "1.2.4",
+  "version": "1.2.5",
   "description": "Library of JS helpers used by SeqDev Actions",
   "license": "MIT",
   "homepage": "https://nasa-ammos.github.io/aerie-docs/sequencing/actions/",
