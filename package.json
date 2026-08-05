@@ -1,10 +1,10 @@
 {
-  "name": "@nasa-jpl/aerie-actions",
+  "name": "@nasa-jpl/plandev-actions",
   "version": "1.2.5",
   "description": "Library of JS helpers used by SeqDev Actions",
   "license": "MIT",
-  "homepage": "https://nasa-ammos.github.io/aerie-docs/sequencing/actions/",
-  "bugs": "https://github.com/NASA-AMMOS/aerie/issues",
+  "homepage": "https://nasa-ammos.github.io/plandev-docs/sequencing/actions/",
+  "bugs": "https://github.com/NASA-AMMOS/plandev/issues",
   "contributors": [
     "Dan Delany <daniel.t.delany@jpl.nasa.gov>",
     "Cody Hansen <cody.m.hansen@jpl.nasa.gov>",
