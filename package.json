@@ -1,7 +1,7 @@
 {
   "name": "@nasa-jpl/plandev-actions",
   "version": "1.3.0-alpha.0",
-  "description": "Library of JS helpers used by SeqDev Actions",
+  "description": "Library of JS helpers used by PlanDev/SeqDev Actions",
   "license": "MIT",
   "homepage": "https://nasa-ammos.github.io/plandev-docs/sequencing/actions/",
   "bugs": "https://github.com/NASA-AMMOS/plandev/issues",
