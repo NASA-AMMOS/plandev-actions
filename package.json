@@ -42,5 +42,8 @@
       "name": "npm",
       "onFail": "warn"
     }
+  },
+  "allowScripts": {
+    "fsevents@2.3.3": true
   }
 }
