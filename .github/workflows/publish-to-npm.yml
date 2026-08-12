@@ -1,26 +1,68 @@
 name: Publish to NPM
 
+# user creates a GH release with a new `vX.X.X` tag to trigger this workflow
 on:
   push:
     tags:
       - v*
   workflow_dispatch:
 
+permissions:
+  contents: read
+  # required for GitHub to issue the OIDC identity npm uses for Trusted Publishing
+  id-token: write
+
 jobs:
   publish-to-npm:
     runs-on: ubuntu-latest
+    # use github environment so we can have an approval policy for workflow runs
+    environment: publish
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Check out repository
+        # general policy: pin `uses` dependencies to commit hashes to avoid tag-poisoning attacks
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
-          cache: npm
-          node-version: 'lts/*'
-          registry-url: 'https://registry.npmjs.org'
-      - name: Install Dependencies
-        run: npm ci
-      - name: Build library
+          # throw away GH token after this step so future steps can't use it
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version-file: .nvmrc
+          registry-url: https://registry.npmjs.org
+          # don't use NPM cache when installing, to avoid possibility of cache-poisoning attacks during publish
+          package-manager-cache: false
+
+      - name: Verify release version
+        # fail & warn if release git tag doesn't match version in `package.json`
+        run: >-
+          node -e "
+          const { version } = require('./package.json');
+          const expectedTag = \`v\${version}\`;
+          if (process.env.GITHUB_REF_NAME !== expectedTag) {
+            throw new Error(\`Tag \${process.env.GITHUB_REF_NAME} does not match package version \${expectedTag}\`);
+          }
+          "
+
+      - name: Install dependencies
+        # use `npm ci` for reproducible installs, fails if package & lock files are out of sync
+        # install without running lifecycle scripts, then run only scripts approved in package.json's `allowScripts`
+        run: |
+          npm ci --ignore-scripts
+          npm rebuild --strict-allow-scripts
+
+      - name: Build
         run: npm run build
+
+      - name: Test
+        run: npm test
+
+      - name: Verify package contents
+        # list all files in the published package, for logs/traceability
+        run: npm pack --dry-run
+
       - name: Publish
-        run: npm publish
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          # pre-release git tags like `v1.0.0-rc.0` will be tagged as `next` version in NPM instead of `latest`
+          NPM_DIST_TAG: ${{ contains(github.ref_name, '-') && 'next' || 'latest' }}
+        run: npm publish --tag "$NPM_DIST_TAG"
