@@ -422,7 +422,7 @@ export class ActionsAPI {
    * @returns Promise which resolves to the loaded sequence adaptation JS object
    */
   async loadAdaptation(): Promise<any> {
-    // todo: type the return value from this, get type from aerie-sequence-languages library?
+    // todo: type the return value from this, get type from plandev-sequence-languages library?
     // lookup workspace's parcel and get its sequence adaptation ID
     const parcel = await this.readParcel();
     const adaptationId = parcel.sequence_adaptation_id;
@@ -494,8 +494,8 @@ export class ActionsAPI {
 ** Deprecated until we figure out how/if we should get a hasura auth token
 ** (currently we only have a PG DB connection in the action context)
 
-export async function postToAerie(aerieInstanceUrl: string, endpoint: string, authToken: string): Promise<any> {
-  const response = await fetch(`${aerieInstanceUrl}/${endpoint}`, {
+export async function postToPlanDev(plandevInstanceUrl: string, endpoint: string, authToken: string): Promise<any> {
+  const response = await fetch(`${plandevInstanceUrl}/${endpoint}`, {
     method: 'post',
     headers: {
       Authorization: `Bearer ${authToken}`,
@@ -506,8 +506,8 @@ export async function postToAerie(aerieInstanceUrl: string, endpoint: string, au
   return await response.json();
 }
 
-export async function getFromAerie(aerieInstanceUrl: string, endpoint: string, authToken: string): Promise<any> {
-  const response = await fetch(`${aerieInstanceUrl}/${endpoint}`, {
+export async function getFromPlanDev(plandevInstanceUrl: string, endpoint: string, authToken: string): Promise<any> {
+  const response = await fetch(`${plandevInstanceUrl}/${endpoint}`, {
     method: 'get',
     headers: {
       Authorization: `Bearer ${authToken}`,
