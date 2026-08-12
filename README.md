@@ -2,18 +2,13 @@
 
 Javascript package for use with [PlanDev/SeqDev](https://nasa-ammos.github.io/plandev-docs/) actions.
 
-## Aerie -> PlanDev/SeqDev Rebrand
+## PlanDev/SeqDev Rebrand
 
-This product was **formerly known as Aerie Actions and is now named PlanDev/SeqDev Actions**. While we've updated most
-documentation and external references, some legacy mentions of the old product name may remain as we complete the transition.
-
-What to know:
+This product was **formerly known as Aerie Actions and is now named PlanDev/SeqDev Actions**. What to know:
 
 - The planning product, including modeling, simulation, scheduling and constraint-checking, is now named PlanDev
 - The sequencing product, including the sequence editor, workspaces, and actions, is now named PlanDev/SeqDev
 - All features and functionality remain the same
-- Currently, repository names, package names and other internal code references will retain their existing names, and deployment/migration procedures have not changed
-- In a future release, our repository and/or package names may change. If so, this will be communicated to users via release notes and normal communication channels
 
 For the latest documentation, visit: [PlanDev Documentation](https://nasa-ammos.github.io/plandev-docs/)
 
