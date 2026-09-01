@@ -34,6 +34,7 @@ export type ActionValueSchemaSequenceList = {
 
 export type ActionValueSchemaFile = {
   type: 'file';
+  pattern?: string;
   extensionPattern?: string;
   filenamePattern?: string;
   primary?: boolean;
@@ -41,6 +42,7 @@ export type ActionValueSchemaFile = {
 
 export type ActionValueSchemaFileList = {
   type: 'fileList';
+  pattern?: string;
   extensionPattern?: string;
   filenamePattern?: string;
   primary?: boolean;
