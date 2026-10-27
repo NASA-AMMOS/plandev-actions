@@ -266,7 +266,7 @@ export class ActionsAPI {
   }
 
   /** Read immutable historical content without changing the working file. Empty content is valid. */
-  async readFileRevision(path: string, revision: string): Promise<string> {
+  async readFileAtRevision(path: string, revision: string): Promise<string> {
     const apiPath = `/versioning/${this.workspaceId}/${encodeURIComponent(path)}?revision=${encodeURIComponent(revision)}`;
     return this.reqWorkspace(apiPath, 'GET');
   }

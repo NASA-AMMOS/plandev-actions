@@ -91,7 +91,7 @@ describe('workspace revisions and concurrency tokens', () => {
 
   test('historical content may be empty and the path and revision are encoded separately', async () => {
     fetchMock.mockResolvedValueOnce(new Response(''));
-    await expect(api.readFileRevision('folder/a #?.seq', 'a&revision=b')).resolves.toBe('');
+    await expect(api.readFileAtRevision('folder/a #?.seq', 'a&revision=b')).resolves.toBe('');
     const [url, options] = fetchMock.mock.calls[0];
     expect(url).toBe('http://workspace.local/versioning/42/folder%2Fa%20%23%3F.seq?revision=a%26revision%3Db');
     expect(options.method).toBe('GET');
