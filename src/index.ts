@@ -3,6 +3,15 @@ import vm from 'node:vm';
 import type { PoolClient, QueryResult } from 'pg';
 import { adaptationQuery, dictionaryQuery, queryReadParcel } from './helpers/db-helpers';
 import { ActionsConfig } from './types';
+import type {
+  CreateFileRevisionOptions,
+  CreateFileRevisionResult,
+  FileReadResult,
+  FileRevisionList,
+  FileRevisionMetadata,
+  FileWriteResult,
+  RevisionWriteOptions,
+} from './types';
 import {
   FileMetadata,
   FileMetadataWritable,
@@ -114,19 +123,25 @@ export class ActionsAPI {
   }
 
   /**
-   * A helper method to perform GET, PUT, and POST methods on the workspace endpoint.
+   * Send an authenticated workspace request without consuming a successful response body.
    * @param path - URL path to be queried
-   * @param method - URL method to be used (GET, PUT, POST)
+   * @param method - HTTP method to be used.
    * @param body - Request body, if needed.
-   * @returns The response body as a string.
+   * @param extraHeaders - Additional request headers, such as If-Match.
+   * @returns The successful response, including headers.
    * @private
    */
-  private async reqWorkspace(path: string, method: string, body: any | null = null): Promise<string> {
+  private async requestWorkspace(
+    path: string,
+    method: string,
+    body: unknown = null,
+    extraHeaders: Record<string, string> = {},
+  ): Promise<Response> {
     if (!this.WORKSPACE_BASE_URL) {
       throw new Error('WORKSPACE_BASE_URL not configured');
     }
 
-    const headers: HeadersInit = {};
+    const headers: Record<string, string> = { ...extraHeaders };
     if (this.config.SECRETS?.authorization) {
       headers['authorization'] = this.config.SECRETS.authorization;
       if (this.config.USER_ROLE) {
@@ -157,13 +172,25 @@ export class ActionsAPI {
     };
 
     const response = await fetch(`${this.WORKSPACE_BASE_URL}${path}`, options);
-    const text = await response.text();
-
     if (!response.ok) {
+      const text = await response.text();
       throw new Error(`${response.status} - ${text}`);
     }
 
-    return text;
+    return response;
+  }
+
+  /** Text-returning wrapper retained for existing file and metadata operations. */
+  private async reqWorkspace(path: string, method: string, body: unknown = null): Promise<string> {
+    return (await this.requestWorkspace(path, method, body)).text();
+  }
+
+  /** Reject invalid preconditions before sending a mutation; callers decide the omission behavior. */
+  private ifMatchHeaders(ifMatch: string): Record<string, string> {
+    if (typeof ifMatch !== 'string' || ifMatch.trim().length === 0) {
+      throw new TypeError('ifMatch must be a current file ETag or an explicit "*"');
+    }
+    return { 'If-Match': ifMatch };
   }
 
   /**
@@ -202,6 +229,17 @@ export class ActionsAPI {
   }
 
   /**
+   * Read the working file and the server's concurrency token from the same response.
+   * Pass the ETag unchanged to revision creation or restore for an optional version check.
+   * A missing ETag is null; it is never replaced with '*'. Historical reads have no current-file ETag.
+   */
+  async readFileWithEtag(path: string): Promise<FileReadResult> {
+    const fullPath = `/ws/${this.workspaceId}/${encodeURIComponent(path)}`;
+    const response = await this.requestWorkspace(fullPath, 'GET');
+    return { content: await response.text(), etag: response.headers.get('ETag') };
+  }
+
+  /**
    * Write a file with the given name and definition to the workspace filesystem.
    * @param name - Full path of the file from the workspace root. This functions like mkdir -p; if parent folders
    * do not exist, they will be created.
@@ -219,6 +257,52 @@ export class ActionsAPI {
     const path = `/ws/${this.workspaceId}/${encodeURIComponent(name)}?type=file&overwrite=${overwrite}`;
     await this.reqWorkspace(path, 'PUT', formData);
     return { success: true };
+  }
+
+  /** List a current file's saved revisions, newest first, and its matching revision if any. */
+  async listFileRevisions(path: string): Promise<FileRevisionList> {
+    const apiPath = `/versioning/${this.workspaceId}/${encodeURIComponent(path)}`;
+    return JSON.parse(await this.reqWorkspace(apiPath, 'GET'));
+  }
+
+  /** Read immutable historical content without changing the working file. Empty content is valid. */
+  async readFileRevision(path: string, revision: string): Promise<string> {
+    const apiPath = `/versioning/${this.workspaceId}/${encodeURIComponent(path)}?revision=${encodeURIComponent(revision)}`;
+    return this.reqWorkspace(apiPath, 'GET');
+  }
+
+  /** Read the revision's details and the file metadata saved with it. */
+  async getFileRevisionMetadata(path: string, revision: string): Promise<FileRevisionMetadata> {
+    const apiPath = `/versioning/metadata/${this.workspaceId}/${encodeURIComponent(path)}?revision=${encodeURIComponent(revision)}`;
+    return JSON.parse(await this.reqWorkspace(apiPath, 'GET'));
+  }
+
+  /**
+   * Make a revision from the current saved (working copy) file state, the server assigns the revision name.
+   * Optionally supply ifMatch to check the content version; defaults to '*'.
+   */
+  async createFileRevision(path: string, options: CreateFileRevisionOptions = {}): Promise<CreateFileRevisionResult> {
+    const headers = this.ifMatchHeaders(options.ifMatch === undefined ? '*' : options.ifMatch);
+    const apiPath = `/versioning/${this.workspaceId}/${encodeURIComponent(path)}`;
+    const response = await this.requestWorkspace(apiPath, 'POST', { message: options.message ?? '' }, headers);
+    return { name: await response.text() };
+  }
+
+  /**
+   * Restore content and user metadata into the existing working file. Current readOnly/system metadata are retained.
+   * Optionally supply ifMatch to check the content version; defaults to '*'.
+   * Does not create a new revision or resurrect a deleted file.
+   */
+  async restoreFileRevision(
+    path: string,
+    revision: string,
+    options: RevisionWriteOptions = {},
+  ): Promise<FileWriteResult> {
+    const headers = this.ifMatchHeaders(options.ifMatch === undefined ? '*' : options.ifMatch);
+    const apiPath = `/versioning/restore/${this.workspaceId}/${encodeURIComponent(path)}?revision=${encodeURIComponent(revision)}`;
+    const response = await this.requestWorkspace(apiPath, 'POST', null, headers);
+    await response.text();
+    return { success: true, etag: response.headers.get('ETag') };
   }
 
   /**
