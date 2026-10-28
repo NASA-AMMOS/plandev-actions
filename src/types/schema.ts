@@ -116,6 +116,24 @@ export type ActionSettingDefinitions = Record<string, ActionValueSchema>;
 // (for the type of value passed into the action main function)
 type VariantKeyUnion<T extends { variants: readonly { key: unknown }[] }> = T['variants'][number]['key'];
 
+// the types of the values that will be passed in for file/fileList/sequence/sequenceList type parameters
+// if withRevision is false, the value will just be the file's path (string)
+// if withRevision is true, it will be an object with 'path' and 'revision' strings
+// if (and only if) allowWorkingCopy is true, 'revision' may be null (working copy)
+type FileInputValueType<T extends ActionValueSchemaFile | ActionValueSchemaSequence> =
+  T extends { withRevision: true; allowWorkingCopy: true }
+  ? FileRefNullableRevision
+  : T extends { withRevision: true; allowWorkingCopy: false }
+    ? FileRef
+    : string;
+
+type FileListInputValueType<T extends ActionValueSchemaFileList | ActionValueSchemaSequenceList> =
+  T extends { withRevision: true; allowWorkingCopy: true }
+    ? FileRefNullableRevision[]
+    : T extends { withRevision: true; allowWorkingCopy: false }
+    ? FileRef[]
+    : string[]
+
 // InferSchemaType is a type that resolves to the underlying value type,
 // given an ActionValueSchema as a generic
 // eg. InferSchemaType<ActionValueSchemaString> => string
@@ -130,17 +148,9 @@ type InferSchemaType<T extends ActionValueSchema> = T extends ActionValueSchemaB
         : T extends ActionValueSchemaReal
           ? number // do we need this ???
           : T extends ActionValueSchemaFile | ActionValueSchemaSequence
-            ? T extends { withRevision: true; allowWorkingCopy: true }
-              ? FileRefNullableRevision
-              : T extends { withRevision: true; allowWorkingCopy: false }
-                ? FileRef
-                : string
+            ? FileInputValueType<T>
             : T extends ActionValueSchemaFileList | ActionValueSchemaSequenceList
-              ? T extends { withRevision: true; allowWorkingCopy: true }
-                ? FileRefNullableRevision[]
-                : T extends { withRevision: true; allowWorkingCopy: false }
-                  ? FileRef[]
-                  : string[]
+              ? FileListInputValueType<T>
               : T extends ActionValueSchemaSeries
                 ? any[] // how to type???
                 : T extends ActionValueSchemaStruct
