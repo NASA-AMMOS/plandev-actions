@@ -14,7 +14,6 @@ const etag = '"current-content-hash"';
 const savedEtag = '"saved-content-hash"';
 const revision: FileRevision = {
   name: 'aa',
-  fileId: '842415fa-48e5-4c89-a4d3-92515837b326',
   pathAtRevision: 'old/location.seq',
   message: 'validated',
   createdBy: 'alice',

@@ -3,7 +3,6 @@ import type { FileMetadata } from './db-types';
 /** A saved revision. Names are assigned by the server and scoped to a file's history. */
 export type FileRevision = {
   name: string;
-  fileId: string;
   pathAtRevision: string;
   message: string;
   createdBy: string;

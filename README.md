@@ -34,7 +34,7 @@ server's permissions and read-only checks.
 All methods are asynchronous. Paths are relative to the workspace and identify the file at its **current** path;
 `pathAtRevision` in the returned metadata records its historical path. Revision names are assigned by the server and
 are scoped to a file's history. Lists are newest first. `matchingRevision: null` means the saved content and metadata
-match no listed revision; the list may still contain revisions. `FileRevision` also includes `fileId`, `message`,
+match no listed revision; the list may still contain revisions. `FileRevision` also includes `message`,
 `createdBy`, `createdAt`, and nullable `lastEditedBy`/`lastEditedAt`. Timestamps remain strings.
 
 Creating a revision bookmarks the saved state without changing the file. Restoring writes the historical content
