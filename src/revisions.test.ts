@@ -1,9 +1,11 @@
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, expectTypeOf, test, vi } from 'vitest';
 import type { PoolClient } from 'pg';
 import {
   ActionsAPI,
   type ActionsConfig,
+  type ActionParameters,
   type CreateFileRevisionOptions,
+  type FileRef,
   type FileRevision,
   type RevisionWriteOptions,
 } from './index';
@@ -281,4 +283,58 @@ describe('workspace revisions and concurrency tokens', () => {
     await expect(api.createFileRevision('a.seq', { ifMatch: etag })).rejects.toBe(error);
     expect(fetchMock).toHaveBeenCalledOnce();
   });
+});
+
+describe('readFile with file references', () => {
+  let api: ActionsAPI;
+  let fetchMock: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    api = makeApi();
+    fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+  });
+
+  afterEach(() => vi.unstubAllGlobals());
+
+  test('paths and working-copy references read the current file', async () => {
+    fetchMock.mockResolvedValueOnce(new Response('now')).mockResolvedValueOnce(new Response('now'));
+    await expect(api.readFile('dir/a.seq')).resolves.toBe('now');
+    await expect(api.readFile({ path: 'dir/a.seq', revision: null })).resolves.toBe('now');
+    expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
+      'http://workspace.local/ws/42/dir%2Fa.seq',
+      'http://workspace.local/ws/42/dir%2Fa.seq',
+    ]);
+  });
+
+  test('a pinned reference reads that revision', async () => {
+    fetchMock.mockResolvedValueOnce(new Response('then'));
+    await expect(api.readFile({ path: 'dir/a.seq', revision: 'aa' })).resolves.toBe('then');
+    expect(fetchMock).toHaveBeenCalledOnce();
+    expect(fetchMock.mock.calls[0][0]).toBe('http://workspace.local/versioning/42/dir%2Fa.seq?revision=aa');
+  });
+
+  test('a missing pinned revision fails rather than falling back to the working copy', async () => {
+    fetchMock.mockResolvedValueOnce(new Response('{"type":"NO_SUCH_REVISION"}', { status: 404 }));
+    await expect(api.readFile({ path: 'a.seq', revision: 'zz' })).rejects.toThrow(/404/);
+    expect(fetchMock).toHaveBeenCalledOnce();
+  });
+});
+
+test('withRevision: true makes file and sequence parameters FileRefs', () => {
+  const definitions = {
+    config: { type: 'file', withRevision: true },
+    input: { type: 'sequence', withRevision: true },
+    inputs: { type: 'sequenceList', withRevision: true },
+    files: { type: 'fileList', withRevision: true },
+    plain: { type: 'file' },
+    plainList: { type: 'sequenceList' },
+  } as const;
+  type Params = ActionParameters<typeof definitions>;
+  expectTypeOf<Params['config']>().toEqualTypeOf<FileRef>();
+  expectTypeOf<Params['input']>().toEqualTypeOf<FileRef>();
+  expectTypeOf<Params['inputs']>().toEqualTypeOf<FileRef[]>();
+  expectTypeOf<Params['files']>().toEqualTypeOf<FileRef[]>();
+  expectTypeOf<Params['plain']>().toEqualTypeOf<string>();
+  expectTypeOf<Params['plainList']>().toEqualTypeOf<string[]>();
 });

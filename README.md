@@ -26,7 +26,7 @@ server's permissions and read-only checks.
 | Method                                          | Result                                                            |
 | ----------------------------------------------- | ----------------------------------------------------------------- |
 | `listFileRevisions(path)`                       | `{ revisions: FileRevision[], matchingRevision: string \| null }` |
-| `readFileRevision(path, revision)`              | Historical file contents as a string                              |
+| `readFileAtRevision(path, revision)`            | Historical file contents as a string                              |
 | `getFileRevisionMetadata(path, revision)`       | `{ versionMetadata: FileRevision, fileMetadata: FileMetadata }`   |
 | `createFileRevision(path, options?)`            | `{ name: string }`                                                |
 | `restoreFileRevision(path, revision, options?)` | `{ success: true, etag: string \| null }`                         |
@@ -53,6 +53,32 @@ By default, these calls operate on the file's current saved state. The SDK suppl
 `If-Match: *` header internally. Optionally pass `{ ifMatch: etag }` to request a content-version check;
 creation options may also contain `message`.
 
+### Choosing revisions for file parameters
+
+Set `withRevision: true` on a `file`, `fileList`, `sequence`, or `sequenceList` parameter and the person running the
+action also chooses, per file, the **working copy** or a named revision. The action then receives a `FileRef` (or
+`FileRef[]`) instead of a path string; without the flag it receives strings, as before.
+
+```ts
+type FileRef = { path: string; revision: string | null }; // null: working copy; 'b': revision b
+```
+
+The working copy is the file's latest saved contents at the moment the action reads it, so it is not a reproducible
+snapshot. A pinned revision is immutable. `readFile` accepts either a path or a `FileRef`:
+
+```ts
+export const parameterDefinitions = {
+  input: { type: 'sequence', primary: true, withRevision: true },
+} as const satisfies ActionParameterDefinitions;
+
+export async function main(parameters: ActionParameters<typeof parameterDefinitions>, settings, actionsAPI) {
+  const source = await actionsAPI.readFile(parameters.input); // parameters.input: FileRef
+  // ...
+}
+```
+
+A pinned read fails, rather than falling back to the working copy, if the file at that path has no such revision.
+
 ### Conditional operations
 
 `readFile(path)` still returns a string. Use `readFileWithEtag(path)` to obtain `{ content, etag }` instead. The ETag is
@@ -67,7 +93,7 @@ const revision = await actionsAPI.createFileRevision('sequences/example.seq', {
   ifMatch: file.etag,
   message: 'Passed validation',
 });
-const historicalContent = await actionsAPI.readFileRevision('sequences/example.seq', revision.name);
+const historicalContent = await actionsAPI.readFileAtRevision('sequences/example.seq', revision.name);
 ```
 
 For revision creation and restore, `ifMatch` is entirely optional. Supply a current-file ETag to request a content-version
@@ -93,7 +119,7 @@ additional revision. The current backend's ETag covers file content only, so it 
 Failed workspace HTTP responses continue to throw plain `Error` objects with the existing
 `"status - response body"` message format. Network errors remain the original fetch errors.
 
-The package adds the types `FileRevision`, `FileRevisionList`, `FileRevisionMetadata`, `CreateFileRevisionOptions`,
+The package adds the types `FileRef`, `FileRevision`, `FileRevisionList`, `FileRevisionMetadata`, `CreateFileRevisionOptions`,
 `CreateFileRevisionResult`, `RevisionWriteOptions`, `FileReadResult`, and `FileWriteResult` (used by restore).
 
 ## Action results: `data` vs `report`

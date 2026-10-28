@@ -7,6 +7,7 @@ import type {
   CreateFileRevisionOptions,
   CreateFileRevisionResult,
   FileReadResult,
+  FileRef,
   FileRevisionList,
   FileRevisionMetadata,
   FileWriteResult,
@@ -213,10 +214,16 @@ export class ActionsAPI {
 
   /**
    * Read a single file's contents in the given workspace.
-   * @param path - The path of the given workspace context to query
+   * @param file - A workspace-relative path, or the `FileRef` a `withRevision` file/sequence parameter receives.
+   * A working-copy reference reads the file's current saved contents. A pinned reference reads that revision, and fails
+   * (never falling back to the working copy) if the file at that path has no such revision.
    * @returns The file contents as a string.
    */
-  async readFile(path: string): Promise<string> {
+  async readFile(file: string | FileRef): Promise<string> {
+    if (typeof file !== 'string') {
+      return file.revision === null ? this.readFile(file.path) : this.readFileAtRevision(file.path, file.revision);
+    }
+    const path = file;
     // HTTP backend - fetch sequence file by name
     // Example endpoint: GET /ws/:workspaceId/:name
     const fullPath = `/ws/${this.workspaceId}/${encodeURIComponent(path)}`;

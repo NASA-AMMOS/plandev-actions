@@ -25,24 +25,42 @@ export type ActionValueSchemaReal = {
 export type ActionValueSchemaSequence = {
   type: 'sequence';
   primary?: boolean;
+  /** Let the person running the action pick a revision per file; the action then receives `FileRef`s. */
+  withRevision?: boolean;
 } & ActionValueSchemaMetadata;
 
 export type ActionValueSchemaSequenceList = {
   type: 'sequenceList';
   primary?: boolean;
+  /** Let the person running the action pick a revision per file; the action then receives `FileRef`s. */
+  withRevision?: boolean;
 } & ActionValueSchemaMetadata;
 
 export type ActionValueSchemaFile = {
   type: 'file';
   pattern?: string;
   primary?: boolean;
+  /** Let the person running the action pick a revision per file; the action then receives `FileRef`s. */
+  withRevision?: boolean;
 } & ActionValueSchemaMetadata;
 
 export type ActionValueSchemaFileList = {
   type: 'fileList';
   pattern?: string;
   primary?: boolean;
+  /** Let the person running the action pick a revision per file; the action then receives `FileRef`s. */
+  withRevision?: boolean;
 } & ActionValueSchemaMetadata;
+
+/**
+ * A file chosen for a `file`/`sequence` (or list) parameter that sets `withRevision: true`. `path` is relative to the workspace root.
+ * - `revision: null` is the working copy: the file's latest saved contents at the time the action reads it. It is not a
+ *   snapshot; re-running reads whatever is saved then.
+ * - A revision name (e.g. `'b'`) is that revision's immutable contents, as the file at `path` has it.
+ *
+ * Pass either form straight to `ActionsAPI.readFile`.
+ */
+export type FileRef = { path: string; revision: string | null };
 
 export type ActionValueSchemaSecret = {
   type: 'secret';
@@ -93,8 +111,7 @@ export type ActionSettingDefinitions = Record<string, ActionValueSchema>;
 // type util which, given a ParameterDefinition of a *variant* type parameter,
 // extracts all the valid variant `key` values and makes a union of them
 // (for the type of value passed into the action main function)
-type VariantKeyUnion<T extends { variants: readonly { key: unknown }[] }> =
-    T["variants"][number]["key"];
+type VariantKeyUnion<T extends { variants: readonly { key: unknown }[] }> = T['variants'][number]['key'];
 
 // InferSchemaType is a type that resolves to the underlying value type,
 // given an ActionValueSchema as a generic
@@ -109,21 +126,21 @@ type InferSchemaType<T extends ActionValueSchema> = T extends ActionValueSchemaB
         ? number
         : T extends ActionValueSchemaReal
           ? number // do we need this ???
-          : T extends ActionValueSchemaSequence
-            ? string
-            : T extends ActionValueSchemaSequenceList
-              ? string[]
-              : T extends ActionValueSchemaFile
-                ? string
-                : T extends ActionValueSchemaFileList
-                  ? string[]
-                  : T extends ActionValueSchemaSeries
-                    ? any[] // how to type???
-                    : T extends ActionValueSchemaStruct
-                      ? object
-                      : T extends ActionValueSchemaVariant
-                        ? VariantKeyUnion<T>
-                        : never;
+          : T extends ActionValueSchemaFile | ActionValueSchemaSequence
+            ? T extends { withRevision: true }
+              ? FileRef
+              : string
+            : T extends ActionValueSchemaFileList | ActionValueSchemaSequenceList
+              ? T extends { withRevision: true }
+                ? FileRef[]
+                : string[]
+              : T extends ActionValueSchemaSeries
+                ? any[] // how to type???
+                : T extends ActionValueSchemaStruct
+                  ? object
+                  : T extends ActionValueSchemaVariant
+                    ? VariantKeyUnion<T>
+                    : never;
 
 // the type of the user's parameters/settings object
 export type ActionParameters<T extends ActionParameterDefinitions> = {
