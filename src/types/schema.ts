@@ -27,6 +27,7 @@ export type ActionValueSchemaSequence = {
   primary?: boolean;
   /** Let the person running the action pick a revision per file; the action then receives `FileRef`s. */
   withRevision?: boolean;
+  allowWorkingCopy?: boolean;
 } & ActionValueSchemaMetadata;
 
 export type ActionValueSchemaSequenceList = {
@@ -34,6 +35,7 @@ export type ActionValueSchemaSequenceList = {
   primary?: boolean;
   /** Let the person running the action pick a revision per file; the action then receives `FileRef`s. */
   withRevision?: boolean;
+  allowWorkingCopy?: boolean;
 } & ActionValueSchemaMetadata;
 
 export type ActionValueSchemaFile = {
@@ -60,7 +62,8 @@ export type ActionValueSchemaFileList = {
  *
  * Pass either form straight to `ActionsAPI.readFile`.
  */
-export type FileRef = { path: string; revision: string | null };
+export type FileRefNullableRevision = { path: string; revision: string | null };
+export type FileRef = { path: string; revision: string };
 
 export type ActionValueSchemaSecret = {
   type: 'secret';
@@ -127,13 +130,17 @@ type InferSchemaType<T extends ActionValueSchema> = T extends ActionValueSchemaB
         : T extends ActionValueSchemaReal
           ? number // do we need this ???
           : T extends ActionValueSchemaFile | ActionValueSchemaSequence
-            ? T extends { withRevision: true }
-              ? FileRef
-              : string
+            ? T extends { withRevision: true; allowWorkingCopy: true }
+              ? FileRefNullableRevision
+              : T extends { withRevision: true; allowWorkingCopy: false }
+                ? FileRef
+                : string
             : T extends ActionValueSchemaFileList | ActionValueSchemaSequenceList
-              ? T extends { withRevision: true }
-                ? FileRef[]
-                : string[]
+              ? T extends { withRevision: true; allowWorkingCopy: true }
+                ? FileRefNullableRevision[]
+                : T extends { withRevision: true; allowWorkingCopy: false }
+                  ? FileRef[]
+                  : string[]
               : T extends ActionValueSchemaSeries
                 ? any[] // how to type???
                 : T extends ActionValueSchemaStruct
