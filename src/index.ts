@@ -259,7 +259,8 @@ export class ActionsAPI {
     const formData = new FormData();
     formData.append('file', new Blob([contents]), filenameOnly);
     const path = `/ws/${this.workspaceId}/${encodeURIComponent(name)}?type=file&overwrite=${overwrite}`;
-    await this.requestWorkspace(path, 'PUT', formData);
+    const response = await this.requestWorkspace(path, 'PUT', formData);
+    await response.text();
     return { success: true };
   }
 
@@ -320,7 +321,8 @@ export class ActionsAPI {
    */
   async copyFile(source: string, dest: string): Promise<{ success: true }> {
     const sourcePath = `/ws/${this.workspaceId}/${encodeURIComponent(source)}`;
-    await this.requestWorkspace(sourcePath, 'POST', { copyTo: dest });
+    const response = await this.requestWorkspace(sourcePath, 'POST', { copyTo: dest });
+    await response.text();
     return { success: true };
   }
 
@@ -332,7 +334,8 @@ export class ActionsAPI {
    */
   async moveFile(source: string, dest: string): Promise<{ success: true }> {
     const sourcePath = `/ws/${this.workspaceId}/${encodeURIComponent(source)}`;
-    await this.requestWorkspace(sourcePath, 'POST', { moveTo: dest });
+    const response = await this.requestWorkspace(sourcePath, 'POST', { moveTo: dest });
+    await response.text();
     return { success: true };
   }
 
@@ -343,7 +346,8 @@ export class ActionsAPI {
    */
   async deleteFile(source: string): Promise<{ success: true }> {
     const sourcePath = `/ws/${this.workspaceId}/${encodeURIComponent(source)}`;
-    await this.requestWorkspace(sourcePath, 'DELETE', {});
+    const response = await this.requestWorkspace(sourcePath, 'DELETE', {});
+    await response.text();
     return { success: true };
   }
 
@@ -356,7 +360,8 @@ export class ActionsAPI {
   async createDirectory(name: string): Promise<{ success: true }> {
     // Example: PUT /ws/:workspaceId/:name
     const path = `/ws/${this.workspaceId}/${encodeURIComponent(name)}?type=directory`;
-    await this.requestWorkspace(path, 'PUT', '{}');
+    const response = await this.requestWorkspace(path, 'PUT', '{}');
+    await response.text();
     return { success: true };
   }
 
