@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises';
 import vm from 'node:vm';
 import type { PoolClient, QueryResult } from 'pg';
 import { adaptationQuery, dictionaryQuery, queryReadParcel } from './helpers/db-helpers';
-import { ActionsConfig } from './types';
+import { ActionParameterDefinitions, ActionsConfig } from './types';
 import type {
   CreateFileRevisionOptions,
   CreateFileRevisionResult,
@@ -74,6 +74,11 @@ export type ListFilesOptions = {
 export type SetFileMetadataOptions = {
   mergeBehavior?: 'deep' | 'shallow' | 'overwrite';
 };
+
+// Util function for defining an action parameters object
+export function defineParameters<const T extends ActionParameterDefinitions>(definitions: T): T {
+  return definitions;
+}
 
 // Main API class used by the user's action
 export class ActionsAPI {

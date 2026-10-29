@@ -8,7 +8,7 @@ import {
   type CreateFileRevisionOptions,
   type FileRef,
   type FileRevision,
-  type RevisionWriteOptions,
+  type RevisionWriteOptions, defineParameters,
 } from './index';
 
 const etag = '"current-content-hash"';
@@ -442,4 +442,25 @@ test('File inputs which omit withRevision default to paths', () => {
   expectTypeOf<Params['files']>().toEqualTypeOf<string[]>();
   expectTypeOf<Params['sequence']>().toEqualTypeOf<string>();
   expectTypeOf<Params['sequences']>().toEqualTypeOf<string[]>();
+});
+
+test('defineParameters preserves inline flags without as const', () => {
+  const definitions = defineParameters({
+    file: { type: 'file', withRevision: true },
+    files: { type: 'fileList', withRevision: true },
+    sequence: { type: 'sequence', withRevision: true },
+    sequences: { type: 'sequenceList', withRevision: true },
+    path: { type: 'file' },
+    pinned: { type: 'file', withRevision: true, allowWorkingCopy: false },
+  });
+
+  expectTypeOf<typeof definitions.file.withRevision>().toEqualTypeOf<true>();
+
+  type Params = ActionParameters<typeof definitions>;
+  expectTypeOf<Params['file']>().toEqualTypeOf<FileRef>();
+  expectTypeOf<Params['files']>().toEqualTypeOf<FileRef[]>();
+  expectTypeOf<Params['sequence']>().toEqualTypeOf<FileRef>();
+  expectTypeOf<Params['sequences']>().toEqualTypeOf<FileRef[]>();
+  expectTypeOf<Params['path']>().toEqualTypeOf<string>();
+  expectTypeOf<Params['pinned']>().toEqualTypeOf<Required<FileRef>>();
 });
