@@ -21,8 +21,8 @@
     "build": "rimraf dist && tsc",
     "prepublishOnly": "npm run build",
     "format": "prettier --write .",
-    "test": "vitest run",
-    "test:watch": "vitest"
+    "test": "vitest run --typecheck",
+    "test:watch": "vitest --typecheck"
   },
   "devDependencies": {
     "@vitest/coverage-v8": "^4.1.5",

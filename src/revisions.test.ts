@@ -85,7 +85,7 @@ describe('workspace revisions and concurrency tokens', () => {
     expect(fetchMock.mock.calls[0][1].method).toBe('GET');
   });
 
-  test.each([[], [revision]])('preserves a null match independently of the revision list (%j)', async revisions => {
+  test.each([[] as FileRevision[], [revision]])('preserves a null match independently of the revision list (%j)', async (revisions) => {
     const listing = { revisions, matchingRevision: null };
     fetchMock.mockResolvedValueOnce(Response.json(listing));
     await expect(api.listFileRevisions('a.seq')).resolves.toEqual(listing);
