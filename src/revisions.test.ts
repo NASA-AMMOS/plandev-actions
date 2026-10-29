@@ -3,9 +3,11 @@ import type { PoolClient } from 'pg';
 import {
   ActionsAPI,
   type ActionsConfig,
+  type ActionParameterDefinitions,
   type ActionParameters,
   type CreateFileRevisionOptions,
   type FileRef,
+  type FileRefNullableRevision,
   type FileRevision,
   type RevisionWriteOptions,
 } from './index';
@@ -336,4 +338,28 @@ test('withRevision: true makes file and sequence parameters FileRefs', () => {
   expectTypeOf<Params['files']>().toEqualTypeOf<FileRef[]>();
   expectTypeOf<Params['plain']>().toEqualTypeOf<string>();
   expectTypeOf<Params['plainList']>().toEqualTypeOf<string[]>();
+});
+
+test('allowWorkingCopy decides whether a FileRef revision may be null', () => {
+  const definitions = {
+    config: { type: 'file', withRevision: true, allowWorkingCopy: true },
+    input: { type: 'sequence', withRevision: true, allowWorkingCopy: true },
+    inputs: { type: 'sequenceList', withRevision: true, allowWorkingCopy: true },
+    files: { type: 'fileList', withRevision: true, allowWorkingCopy: true },
+    pinned: { type: 'file', withRevision: true, allowWorkingCopy: false },
+    pinnedList: { type: 'sequenceList', withRevision: true, allowWorkingCopy: false },
+    plain: { type: 'file', allowWorkingCopy: true },
+    omitted: { type: 'file', withRevision: true },
+    omittedList: { type: 'fileList', withRevision: true },
+  } as const satisfies ActionParameterDefinitions;
+  type Params = ActionParameters<typeof definitions>;
+  expectTypeOf<Params['config']>().toEqualTypeOf<FileRefNullableRevision>();
+  expectTypeOf<Params['input']>().toEqualTypeOf<FileRefNullableRevision>();
+  expectTypeOf<Params['inputs']>().toEqualTypeOf<FileRefNullableRevision[]>();
+  expectTypeOf<Params['files']>().toEqualTypeOf<FileRefNullableRevision[]>();
+  expectTypeOf<Params['pinned']>().toEqualTypeOf<FileRef>();
+  expectTypeOf<Params['pinnedList']>().toEqualTypeOf<FileRef[]>();
+  expectTypeOf<Params['plain']>().toEqualTypeOf<string>();
+  expectTypeOf<Params['omitted']>().toEqualTypeOf<FileRef>();
+  expectTypeOf<Params['omittedList']>().toEqualTypeOf<FileRef[]>();
 });

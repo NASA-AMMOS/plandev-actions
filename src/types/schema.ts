@@ -25,16 +25,18 @@ export type ActionValueSchemaReal = {
 export type ActionValueSchemaSequence = {
   type: 'sequence';
   primary?: boolean;
-  /** Let the person running the action pick a revision per file; the action then receives `FileRef`s. */
+  /** Whether the parameter represents a file and its revision or just a file path. */
   withRevision?: boolean;
+  /** Whether to allow the working copy to be selected as a revision. */
   allowWorkingCopy?: boolean;
 } & ActionValueSchemaMetadata;
 
 export type ActionValueSchemaSequenceList = {
   type: 'sequenceList';
   primary?: boolean;
-  /** Let the person running the action pick a revision per file; the action then receives `FileRef`s. */
+  /** Whether the parameter represents a file and its revision or just a file path. */
   withRevision?: boolean;
+  /** Whether to allow the working copy to be selected as a revision. */
   allowWorkingCopy?: boolean;
 } & ActionValueSchemaMetadata;
 
@@ -42,16 +44,20 @@ export type ActionValueSchemaFile = {
   type: 'file';
   pattern?: string;
   primary?: boolean;
-  /** Let the person running the action pick a revision per file; the action then receives `FileRef`s. */
+  /** Whether the parameter represents a file and its revision or just a file path. */
   withRevision?: boolean;
+  /** Whether to allow the working copy to be selected as a revision. */
+  allowWorkingCopy?: boolean;
 } & ActionValueSchemaMetadata;
 
 export type ActionValueSchemaFileList = {
   type: 'fileList';
   pattern?: string;
   primary?: boolean;
-  /** Let the person running the action pick a revision per file; the action then receives `FileRef`s. */
+  /** Whether the parameter represents a file and its revision or just a file path. */
   withRevision?: boolean;
+  /** Whether to allow the working copy to be selected as a revision. */
+  allowWorkingCopy?: boolean;
 } & ActionValueSchemaMetadata;
 
 /**
@@ -119,20 +125,24 @@ type VariantKeyUnion<T extends { variants: readonly { key: unknown }[] }> = T['v
 // the types of the values that will be passed in for file/fileList/sequence/sequenceList type parameters
 // if withRevision is false, the value will just be the file's path (string)
 // if withRevision is true, it will be an object with 'path' and 'revision' strings
-// if (and only if) allowWorkingCopy is true, 'revision' may be null (working copy)
-type FileInputValueType<T extends ActionValueSchemaFile | ActionValueSchemaSequence> =
-  T extends { withRevision: true; allowWorkingCopy: true }
+// if (and only if) allowWorkingCopy is true, 'revision' may be null (working copy); omitted means false
+type FileInputValueType<T extends ActionValueSchemaFile | ActionValueSchemaSequence> = T extends {
+  withRevision: true;
+  allowWorkingCopy: true;
+}
   ? FileRefNullableRevision
-  : T extends { withRevision: true; allowWorkingCopy: false }
+  : T extends { withRevision: true }
     ? FileRef
     : string;
 
-type FileListInputValueType<T extends ActionValueSchemaFileList | ActionValueSchemaSequenceList> =
-  T extends { withRevision: true; allowWorkingCopy: true }
-    ? FileRefNullableRevision[]
-    : T extends { withRevision: true; allowWorkingCopy: false }
+type FileListInputValueType<T extends ActionValueSchemaFileList | ActionValueSchemaSequenceList> = T extends {
+  withRevision: true;
+  allowWorkingCopy: true;
+}
+  ? FileRefNullableRevision[]
+  : T extends { withRevision: true; allowWorkingCopy: false }
     ? FileRef[]
-    : string[]
+    : string[];
 
 // InferSchemaType is a type that resolves to the underlying value type,
 // given an ActionValueSchema as a generic
