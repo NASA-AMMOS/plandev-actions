@@ -85,11 +85,14 @@ describe('workspace revisions and concurrency tokens', () => {
     expect(fetchMock.mock.calls[0][1].method).toBe('GET');
   });
 
-  test.each([[] as FileRevision[], [revision]])('preserves a null match independently of the revision list (%j)', async (revisions) => {
-    const listing = { revisions, matchingRevision: null };
-    fetchMock.mockResolvedValueOnce(Response.json(listing));
-    await expect(api.listFileRevisions('a.seq')).resolves.toEqual(listing);
-  });
+  test.each([[] as FileRevision[], [revision]])(
+    'preserves a null match independently of the revision list (%j)',
+    async revisions => {
+      const listing = { revisions, matchingRevision: null };
+      fetchMock.mockResolvedValueOnce(Response.json(listing));
+      await expect(api.listFileRevisions('a.seq')).resolves.toEqual(listing);
+    },
+  );
 
   test('historical content may be empty and the path and revision are encoded separately', async () => {
     fetchMock.mockResolvedValueOnce(new Response(''));
@@ -364,4 +367,79 @@ test('allowWorkingCopy: false requires a revision on every FileRef', () => {
   expectTypeOf<Params['pinnedList']>().toEqualTypeOf<{ path: string; revision: string }[]>();
   expectTypeOf<Params['pinnedFiles']>().toEqualTypeOf<{ path: string; revision: string }[]>();
   expectTypeOf<Params['plain']>().toEqualTypeOf<string>();
+});
+
+test('File inputs with constant `withRevision: true` config provide FileRef value types', () => {
+  // when options are declared with `as const`, TS knows it is *definitely true*
+  // and provides the correct `FileRef` type to callers
+  const options = { withRevision: true } as const;
+  const definitions = {
+    file: { type: 'file', ...options },
+    files: { type: 'fileList', ...options },
+    sequence: { type: 'sequence', ...options },
+    sequences: { type: 'sequenceList', ...options },
+  } as const satisfies ActionParameterDefinitions;
+
+  expectTypeOf<typeof definitions.file.withRevision>().toEqualTypeOf<true>();
+
+  type Params = ActionParameters<typeof definitions>;
+  expectTypeOf<Params['file']>().toEqualTypeOf<FileRef>();
+  expectTypeOf<Params['files']>().toEqualTypeOf<FileRef[]>();
+  expectTypeOf<Params['sequence']>().toEqualTypeOf<FileRef>();
+  expectTypeOf<Params['sequences']>().toEqualTypeOf<FileRef[]>();
+});
+
+test('File inputs with constant `withRevision: false` config provide string value types', () => {
+  // similarly, when defined false with `as const`, we know to expect a string
+  const options = { withRevision: false } as const;
+  const definitions = {
+    file: { type: 'file', ...options },
+    files: { type: 'fileList', ...options },
+    sequence: { type: 'sequence', ...options },
+    sequences: { type: 'sequenceList', ...options },
+  } as const satisfies ActionParameterDefinitions;
+
+  expectTypeOf<typeof definitions.file.withRevision>().toEqualTypeOf<false>();
+
+  type Params = ActionParameters<typeof definitions>;
+  expectTypeOf<Params['file']>().toEqualTypeOf<string>();
+  expectTypeOf<Params['files']>().toEqualTypeOf<string[]>();
+  expectTypeOf<Params['sequence']>().toEqualTypeOf<string>();
+  expectTypeOf<Params['sequences']>().toEqualTypeOf<string[]>();
+});
+
+test('File inputs with a widened withRevision boolean preserves both possible parameter types', () => {
+  // Mutable object properties get widened to `boolean`, even when initialized to true.
+  // as a result, TS can't tell that this has `withRevision: true` set and can't tell callers
+  // to expect a FileRef object. Fallback to the union of FileRef | string
+  const options = { withRevision: true };
+  const definitions = {
+    file: { type: 'file', ...options },
+    files: { type: 'fileList', ...options },
+    sequence: { type: 'sequence', ...options },
+    sequences: { type: 'sequenceList', ...options },
+  } as const satisfies ActionParameterDefinitions;
+
+  expectTypeOf<typeof definitions.file.withRevision>().toEqualTypeOf<boolean>();
+
+  type Params = ActionParameters<typeof definitions>;
+  expectTypeOf<Params['file']>().toEqualTypeOf<FileRef | string>();
+  expectTypeOf<Params['files']>().toEqualTypeOf<FileRef[] | string[]>();
+  expectTypeOf<Params['sequence']>().toEqualTypeOf<FileRef | string>();
+  expectTypeOf<Params['sequences']>().toEqualTypeOf<FileRef[] | string[]>();
+});
+
+test('File inputs which omit withRevision default to paths', () => {
+  const definitions = {
+    file: { type: 'file' },
+    files: { type: 'fileList' },
+    sequence: { type: 'sequence' },
+    sequences: { type: 'sequenceList' },
+  } as const satisfies ActionParameterDefinitions;
+
+  type Params = ActionParameters<typeof definitions>;
+  expectTypeOf<Params['file']>().toEqualTypeOf<string>();
+  expectTypeOf<Params['files']>().toEqualTypeOf<string[]>();
+  expectTypeOf<Params['sequence']>().toEqualTypeOf<string>();
+  expectTypeOf<Params['sequences']>().toEqualTypeOf<string[]>();
 });

@@ -225,9 +225,7 @@ describe('file metadata operations', () => {
   });
 
   test('getFileMetadata GETs /metadata/:id/<encoded path> and parses the JSON response', async () => {
-    fetchMock.mockResolvedValueOnce(
-      mockFetchResponse({ body: '{"readonly":true,"user":{"tag":"approved"}}' }),
-    );
+    fetchMock.mockResolvedValueOnce(mockFetchResponse({ body: '{"readonly":true,"user":{"tag":"approved"}}' }));
     const { api } = makeApi();
     const result = await api.getFileMetadata('sub/dir/a.txt');
     const [url, options] = fetchMock.mock.calls[0];
@@ -251,7 +249,7 @@ describe('file metadata operations', () => {
 
   test.each(['deep', 'shallow', 'overwrite'] as const)(
     'setFileMetadata appends ?mergeBehavior=%s when configured',
-    async (mergeBehavior) => {
+    async mergeBehavior => {
       const { api } = makeApi();
       await api.setFileMetadata('a.txt', { user: { x: 1 } }, { mergeBehavior });
       const [url] = fetchMock.mock.calls[0];

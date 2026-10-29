@@ -122,27 +122,30 @@ export type ActionSettingDefinitions = Record<string, ActionValueSchema>;
 // (for the type of value passed into the action main function)
 type VariantKeyUnion<T extends { variants: readonly { key: unknown }[] }> = T['variants'][number]['key'];
 
-// the types of the values that will be passed in for file/fileList/sequence/sequenceList type parameters
-// if withRevision is not set, the value is just the file's path (string)
-// if withRevision is true, it is a FileRef: an object with 'path' and, unless it is the working copy, 'revision'
-// if allowWorkingCopy is false, 'revision' is always present (a revision must be chosen for every file)
-type FileInputValueType<T extends ActionValueSchemaFile | ActionValueSchemaSequence> = T extends {
-  withRevision: true;
-  allowWorkingCopy: false;
-}
-  ? Required<FileRef>
-  : T extends { withRevision: true }
-    ? FileRef
-    : string;
+/**
+ * File/sequence input values are paths (strings) by default.
+ * With `withRevision: true`, they become FileRef objects with `path` and `revision`.
+ * `allowWorkingCopy: false` also makes revision required.
+ * The FileList/SequenceList variants follow the same rules, returning arrays.
+ *
+ * WithRevision is a separate type parameter so TypeScript considers true and
+ * false separately when its type is boolean. That gives us FileRef | string
+ * when the flag could be either, while a known true still gives just FileRef.
+ * Checking T extends { withRevision: true } would incorrectly treat a widened
+ * boolean as false and return only string.
+ *
+ * For lists, the fallback is FileRef[] | string[], so we don't expect a mixture
+ * of references and paths.
+ */
+type FileInputValueType<
+  T extends ActionValueSchemaFile | ActionValueSchemaSequence,
+  WithRevision = 'withRevision' extends keyof T ? T['withRevision'] : false,
+> = WithRevision extends true ? (T extends { allowWorkingCopy: false } ? Required<FileRef> : FileRef) : string;
 
-type FileListInputValueType<T extends ActionValueSchemaFileList | ActionValueSchemaSequenceList> = T extends {
-  withRevision: true;
-  allowWorkingCopy: false;
-}
-  ? Required<FileRef>[]
-  : T extends { withRevision: true }
-    ? FileRef[]
-    : string[];
+type FileListInputValueType<
+  T extends ActionValueSchemaFileList | ActionValueSchemaSequenceList,
+  WithRevision = 'withRevision' extends keyof T ? T['withRevision'] : false,
+> = WithRevision extends true ? (T extends { allowWorkingCopy: false } ? Required<FileRef>[] : FileRef[]) : string[];
 
 // InferSchemaType is a type that resolves to the underlying value type,
 // given an ActionValueSchema as a generic

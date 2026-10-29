@@ -12,7 +12,7 @@ describe('adaptationQuery', () => {
 describe('dictionaryQuery', () => {
   test.each(['channel_dictionary', 'command_dictionary', 'parameter_dictionary'] as const)(
     'returns SQL targeting sequencing.%s with a parameterized id',
-    (table) => {
+    table => {
       const sql = dictionaryQuery(table);
       expect(sql).toContain(`sequencing.${table}`);
       expect(sql).toContain('$1');
