@@ -60,7 +60,7 @@ action also chooses, per file, the **working copy** or a named revision. The act
 `FileRef[]`) instead of a path string; without the flag it receives strings, as before.
 
 ```ts
-type FileRef = { path: string; revision?: string }; // no revision: working copy; 'b': revision b; 'latest': newest revision
+type FileRef = { path: string; revision?: string }; // no revision: working copy; 'b': revision b; '@latest': newest revision
 ```
 
 The working copy is the file's latest saved contents at the moment the action reads it, so it is not a reproducible
@@ -77,7 +77,7 @@ export async function main(parameters: ActionParameters<typeof parameterDefiniti
 }
 ```
 
-`'latest'` is resolved when the action reads the file (so a re-run reads whatever is newest then), and fails if the file
+`'@latest'` is resolved when the action reads the file (so a re-run reads whatever is newest then), and fails if the file
 has no revisions. A pinned read fails, rather than falling back to the working copy, if the file at that path has no such revision.
 
 Add `allowWorkingCopy: false` to require a named revision for every selected file. The action then receives

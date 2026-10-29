@@ -283,6 +283,13 @@ export class ActionsAPI {
     return response.text();
   }
 
+  /** Read the contents of a file at the latest named revision. Empty content is valid. */
+  async readFileAtLatestRevision(path: string): Promise<string> {
+    const apiPath = `/versioning/${this.workspaceId}/${encodeURIComponent(path)}?revision=${encodeURIComponent("@latest")}`;
+    const response = await this.requestWorkspace(apiPath, 'GET');
+    return response.text();
+  }
+
   /** Read the revision's details and the file metadata saved with it. */
   async getFileRevisionMetadata(path: string, revision: string): Promise<FileRevisionMetadata> {
     const apiPath = `/versioning/metadata/${this.workspaceId}/${encodeURIComponent(path)}?revision=${encodeURIComponent(revision)}`;

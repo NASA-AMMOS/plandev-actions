@@ -319,9 +319,9 @@ describe('readFile with file references', () => {
 
   test('the latest revision is forwarded as is, to be resolved by the server when the file is read', async () => {
     fetchMock.mockResolvedValueOnce(new Response('newest'));
-    await expect(api.readFile({ path: 'dir/a.seq', revision: 'latest' })).resolves.toBe('newest');
+    await expect(api.readFile({ path: 'dir/a.seq', revision: '@latest' })).resolves.toBe('newest');
     expect(fetchMock).toHaveBeenCalledOnce();
-    expect(fetchMock.mock.calls[0][0]).toBe('http://workspace.local/versioning/42/dir%2Fa.seq?revision=latest');
+    expect(fetchMock.mock.calls[0][0]).toBe('http://workspace.local/versioning/42/dir%2Fa.seq?revision=%40latest');
   });
 
   test('a missing pinned revision fails rather than falling back to the working copy', async () => {
