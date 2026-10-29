@@ -357,7 +357,7 @@ test('allowWorkingCopy: false requires a revision on every FileRef', () => {
     pinnedSequence: { type: 'sequence', withRevision: true, allowWorkingCopy: false },
     pinnedList: { type: 'sequenceList', withRevision: true, allowWorkingCopy: false },
     pinnedFiles: { type: 'fileList', withRevision: true, allowWorkingCopy: false },
-    plain: { type: 'file', allowWorkingCopy: false },
+    plain: { type: 'file' },
   } as const satisfies ActionParameterDefinitions;
   type Params = ActionParameters<typeof definitions>;
   expectTypeOf<Params['allowed']>().toEqualTypeOf<FileRef>();
@@ -463,4 +463,12 @@ test('defineParameters preserves inline flags without as const', () => {
   expectTypeOf<Params['sequences']>().toEqualTypeOf<FileRef[]>();
   expectTypeOf<Params['path']>().toEqualTypeOf<string>();
   expectTypeOf<Params['pinned']>().toEqualTypeOf<Required<FileRef>>();
+});
+
+test('allowWorkingCopy: false requires withRevision: true', () => {
+  // @ts-expect-error requiring a revision must enable revision selection
+  defineParameters({ file: { type: 'file', allowWorkingCopy: false } });
+
+  // @ts-expect-error requiring a revision cannot disable revision selection
+  defineParameters({ file: { type: 'file', withRevision: false, allowWorkingCopy: false } });
 });

@@ -22,43 +22,35 @@ export type ActionValueSchemaReal = {
   type: 'real';
 } & ActionValueSchemaMetadata;
 
+/**
+ * withRevision represents whether the parameter represents a file and its revision or just a file path.
+ * allowWorkingCopy represents whether the working copy may be chosen (default `true`) or every file needs a named revision.
+ */
+type FileRevisionOptions =
+  | { withRevision?: false; allowWorkingCopy?: true }
+  | { withRevision: true; allowWorkingCopy?: boolean };
+
 export type ActionValueSchemaSequence = {
   type: 'sequence';
   primary?: boolean;
-  /** Whether the parameter represents a file and its revision or just a file path. */
-  withRevision?: boolean;
-  /** With `withRevision`, whether the working copy may be chosen (default `true`) or every file needs a named revision. */
-  allowWorkingCopy?: boolean;
-} & ActionValueSchemaMetadata;
+} & ActionValueSchemaMetadata & FileRevisionOptions;
 
 export type ActionValueSchemaSequenceList = {
   type: 'sequenceList';
   primary?: boolean;
-  /** Whether the parameter represents a file and its revision or just a file path. */
-  withRevision?: boolean;
-  /** With `withRevision`, whether the working copy may be chosen (default `true`) or every file needs a named revision. */
-  allowWorkingCopy?: boolean;
-} & ActionValueSchemaMetadata;
+} & ActionValueSchemaMetadata & FileRevisionOptions;
 
 export type ActionValueSchemaFile = {
   type: 'file';
   pattern?: string;
   primary?: boolean;
-  /** Whether the parameter represents a file and its revision or just a file path. */
-  withRevision?: boolean;
-  /** With `withRevision`, whether the working copy may be chosen (default `true`) or every file needs a named revision. */
-  allowWorkingCopy?: boolean;
-} & ActionValueSchemaMetadata;
+} & ActionValueSchemaMetadata & FileRevisionOptions;
 
 export type ActionValueSchemaFileList = {
   type: 'fileList';
   pattern?: string;
   primary?: boolean;
-  /** Whether the parameter represents a file and its revision or just a file path. */
-  withRevision?: boolean;
-  /** With `withRevision`, whether the working copy may be chosen (default `true`) or every file needs a named revision. */
-  allowWorkingCopy?: boolean;
-} & ActionValueSchemaMetadata;
+} & ActionValueSchemaMetadata & FileRevisionOptions;
 
 /**
  * A file chosen for a `file`/`sequence` (or list) parameter that sets `withRevision: true`. `path` is relative to the workspace root.
