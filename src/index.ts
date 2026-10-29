@@ -181,11 +181,6 @@ export class ActionsAPI {
     return response;
   }
 
-  /** Text-returning wrapper retained for existing file and metadata operations. */
-  private async reqWorkspace(path: string, method: string, body: unknown = null): Promise<string> {
-    return (await this.requestWorkspace(path, method, body)).text();
-  }
-
   /** Reject invalid preconditions before sending a mutation; callers decide the omission behavior. */
   private ifMatchHeaders(ifMatch: string): Record<string, string> {
     if (typeof ifMatch !== 'string' || ifMatch.trim().length === 0) {
@@ -207,7 +202,8 @@ export class ActionsAPI {
     if (options.withMetadata) {
       fullPath += `?withMetadata=true`;
     }
-    const data = await this.reqWorkspace(fullPath, 'GET', null);
+    const response = await this.requestWorkspace(fullPath, 'GET', null);
+    const data = await response.text();
     if (!data) throw new Error(`Contents for workspace ${this.workspaceId} not found`);
     return data;
   }
@@ -227,7 +223,8 @@ export class ActionsAPI {
     // HTTP backend - fetch sequence file by name
     // Example endpoint: GET /ws/:workspaceId/:name
     const fullPath = `/ws/${this.workspaceId}/${encodeURIComponent(path)}`;
-    const data = await this.reqWorkspace(fullPath, 'GET', '{}');
+    const response = await this.requestWorkspace(fullPath, 'GET', '{}');
+    const data = await response.text();
     // Intentionally not using `if (!data)` here, as empty string is falsy
     if (data === null || data === undefined) {
       throw new Error(`File ${path} not found`);
@@ -262,26 +259,29 @@ export class ActionsAPI {
     const formData = new FormData();
     formData.append('file', new Blob([contents]), filenameOnly);
     const path = `/ws/${this.workspaceId}/${encodeURIComponent(name)}?type=file&overwrite=${overwrite}`;
-    await this.reqWorkspace(path, 'PUT', formData);
+    await this.requestWorkspace(path, 'PUT', formData);
     return { success: true };
   }
 
   /** List a current file's saved revisions, newest first, and its matching revision if any. */
   async listFileRevisions(path: string): Promise<FileRevisionList> {
     const apiPath = `/versioning/${this.workspaceId}/${encodeURIComponent(path)}`;
-    return JSON.parse(await this.reqWorkspace(apiPath, 'GET'));
+    const response = await this.requestWorkspace(apiPath, 'GET');
+    return JSON.parse(await response.text());
   }
 
-  /** Read immutable historical content without changing the working file. Empty content is valid. */
+  /** Read the contents of a file at a specific historical revision. Empty content is valid. */
   async readFileAtRevision(path: string, revision: string): Promise<string> {
     const apiPath = `/versioning/${this.workspaceId}/${encodeURIComponent(path)}?revision=${encodeURIComponent(revision)}`;
-    return this.reqWorkspace(apiPath, 'GET');
+    const response = await this.requestWorkspace(apiPath, 'GET');
+    return response.text();
   }
 
   /** Read the revision's details and the file metadata saved with it. */
   async getFileRevisionMetadata(path: string, revision: string): Promise<FileRevisionMetadata> {
     const apiPath = `/versioning/metadata/${this.workspaceId}/${encodeURIComponent(path)}?revision=${encodeURIComponent(revision)}`;
-    return JSON.parse(await this.reqWorkspace(apiPath, 'GET'));
+    const response = await this.requestWorkspace(apiPath, 'GET');
+    return JSON.parse(await response.text());
   }
 
   /**
@@ -320,7 +320,7 @@ export class ActionsAPI {
    */
   async copyFile(source: string, dest: string): Promise<{ success: true }> {
     const sourcePath = `/ws/${this.workspaceId}/${encodeURIComponent(source)}`;
-    await this.reqWorkspace(sourcePath, 'POST', { copyTo: dest });
+    await this.requestWorkspace(sourcePath, 'POST', { copyTo: dest });
     return { success: true };
   }
 
@@ -332,7 +332,7 @@ export class ActionsAPI {
    */
   async moveFile(source: string, dest: string): Promise<{ success: true }> {
     const sourcePath = `/ws/${this.workspaceId}/${encodeURIComponent(source)}`;
-    await this.reqWorkspace(sourcePath, 'POST', { moveTo: dest });
+    await this.requestWorkspace(sourcePath, 'POST', { moveTo: dest });
     return { success: true };
   }
 
@@ -343,7 +343,7 @@ export class ActionsAPI {
    */
   async deleteFile(source: string): Promise<{ success: true }> {
     const sourcePath = `/ws/${this.workspaceId}/${encodeURIComponent(source)}`;
-    await this.reqWorkspace(sourcePath, 'DELETE', {});
+    await this.requestWorkspace(sourcePath, 'DELETE', {});
     return { success: true };
   }
 
@@ -356,7 +356,7 @@ export class ActionsAPI {
   async createDirectory(name: string): Promise<{ success: true }> {
     // Example: PUT /ws/:workspaceId/:name
     const path = `/ws/${this.workspaceId}/${encodeURIComponent(name)}?type=directory`;
-    await this.reqWorkspace(path, 'PUT', '{}');
+    await this.requestWorkspace(path, 'PUT', '{}');
     return { success: true };
   }
 
@@ -377,8 +377,9 @@ export class ActionsAPI {
    */
   async getFileMetadata(filePath: string): Promise<FileMetadata> {
     const apiPath = `/metadata/${this.workspaceId}/${encodeURIComponent(filePath)}`;
-    const metadata = await this.reqWorkspace(apiPath, 'GET', {});
-    return JSON.parse(metadata);
+    const response = await this.requestWorkspace(apiPath, 'GET', {});
+    const metadataStr = await response.text();
+    return JSON.parse(metadataStr);
   }
 
   /**
@@ -397,8 +398,9 @@ export class ActionsAPI {
     if (options.mergeBehavior) {
       apiPath += `?mergeBehavior=${options.mergeBehavior}`;
     }
-    const response = await this.reqWorkspace(apiPath, 'POST', metadata);
-    return { success: true, response: response };
+    const response = await this.requestWorkspace(apiPath, 'POST', metadata);
+    const data = await response.text();
+    return { success: true, response: data };
   }
 
   /**
@@ -409,8 +411,9 @@ export class ActionsAPI {
    */
   async unsetFileMetadata(filePath: string, keys: string[]): Promise<FileMetadataWriteResult> {
     const apiPath = `/metadata/unset/${this.workspaceId}/${encodeURIComponent(filePath)}`;
-    const response = await this.reqWorkspace(apiPath, 'POST', keys);
-    return { success: true, response: response };
+    const response = await this.requestWorkspace(apiPath, 'POST', keys);
+    const data = await response.text();
+    return { success: true, response: data };
   }
 
   /**
@@ -420,8 +423,9 @@ export class ActionsAPI {
    */
   async deleteFileMetadata(filePath: string): Promise<FileMetadataWriteResult> {
     const apiPath = `/metadata/${this.workspaceId}/${encodeURIComponent(filePath)}`;
-    const response = await this.reqWorkspace(apiPath, 'DELETE', {});
-    return { success: true, response: response };
+    const response = await this.requestWorkspace(apiPath, 'DELETE', {});
+    const data = await response.text();
+    return { success: true, response: data };
   }
 
   /**
