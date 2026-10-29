@@ -314,6 +314,13 @@ describe('readFile with file references', () => {
     expect(fetchMock.mock.calls[0][0]).toBe('http://workspace.local/versioning/42/dir%2Fa.seq?revision=aa');
   });
 
+  test('the latest revision is forwarded as is, to be resolved by the server when the file is read', async () => {
+    fetchMock.mockResolvedValueOnce(new Response('newest'));
+    await expect(api.readFile({ path: 'dir/a.seq', revision: 'latest' })).resolves.toBe('newest');
+    expect(fetchMock).toHaveBeenCalledOnce();
+    expect(fetchMock.mock.calls[0][0]).toBe('http://workspace.local/versioning/42/dir%2Fa.seq?revision=latest');
+  });
+
   test('a missing pinned revision fails rather than falling back to the working copy', async () => {
     fetchMock.mockResolvedValueOnce(new Response('{"type":"NO_SUCH_REVISION"}', { status: 404 }));
     await expect(api.readFile({ path: 'a.seq', revision: 'zz' })).rejects.toThrow(/404/);

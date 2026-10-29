@@ -65,6 +65,7 @@ export type ActionValueSchemaFileList = {
  * - No `revision` is the working copy: the file's latest saved contents at the time the action reads it. It is not a
  *   snapshot; re-running reads whatever is saved then.
  * - A revision name (e.g. `'b'`) is that revision's immutable contents, as the file at `path` has it.
+ * - `'latest'` is whichever revision is newest at the moment the action reads the file. It fails if the file has none.
  *
  * Pass either form straight to `ActionsAPI.readFile`.
  */
