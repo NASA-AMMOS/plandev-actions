@@ -221,7 +221,7 @@ export class ActionsAPI {
    */
   async readFile(file: string | FileRef): Promise<string> {
     if (typeof file !== 'string') {
-      return file.revision === null ? this.readFile(file.path) : this.readFileAtRevision(file.path, file.revision);
+      return file.revision == null ? this.readFile(file.path) : this.readFileAtRevision(file.path, file.revision);
     }
     const path = file;
     // HTTP backend - fetch sequence file by name

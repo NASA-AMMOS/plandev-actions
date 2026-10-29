@@ -27,7 +27,7 @@ export type ActionValueSchemaSequence = {
   primary?: boolean;
   /** Whether the parameter represents a file and its revision or just a file path. */
   withRevision?: boolean;
-  /** Whether to allow the working copy to be selected as a revision. */
+  /** With `withRevision`, whether the working copy may be chosen (default `true`) or every file needs a named revision. */
   allowWorkingCopy?: boolean;
 } & ActionValueSchemaMetadata;
 
@@ -36,7 +36,7 @@ export type ActionValueSchemaSequenceList = {
   primary?: boolean;
   /** Whether the parameter represents a file and its revision or just a file path. */
   withRevision?: boolean;
-  /** Whether to allow the working copy to be selected as a revision. */
+  /** With `withRevision`, whether the working copy may be chosen (default `true`) or every file needs a named revision. */
   allowWorkingCopy?: boolean;
 } & ActionValueSchemaMetadata;
 
@@ -46,7 +46,7 @@ export type ActionValueSchemaFile = {
   primary?: boolean;
   /** Whether the parameter represents a file and its revision or just a file path. */
   withRevision?: boolean;
-  /** Whether to allow the working copy to be selected as a revision. */
+  /** With `withRevision`, whether the working copy may be chosen (default `true`) or every file needs a named revision. */
   allowWorkingCopy?: boolean;
 } & ActionValueSchemaMetadata;
 
@@ -56,20 +56,19 @@ export type ActionValueSchemaFileList = {
   primary?: boolean;
   /** Whether the parameter represents a file and its revision or just a file path. */
   withRevision?: boolean;
-  /** Whether to allow the working copy to be selected as a revision. */
+  /** With `withRevision`, whether the working copy may be chosen (default `true`) or every file needs a named revision. */
   allowWorkingCopy?: boolean;
 } & ActionValueSchemaMetadata;
 
 /**
  * A file chosen for a `file`/`sequence` (or list) parameter that sets `withRevision: true`. `path` is relative to the workspace root.
- * - `revision: null` is the working copy: the file's latest saved contents at the time the action reads it. It is not a
+ * - No `revision` is the working copy: the file's latest saved contents at the time the action reads it. It is not a
  *   snapshot; re-running reads whatever is saved then.
  * - A revision name (e.g. `'b'`) is that revision's immutable contents, as the file at `path` has it.
  *
  * Pass either form straight to `ActionsAPI.readFile`.
  */
-export type FileRefNullableRevision = { path: string; revision: string | null };
-export type FileRef = { path: string; revision: string };
+export type FileRef = { path: string; revision?: string };
 
 export type ActionValueSchemaSecret = {
   type: 'secret';
@@ -123,24 +122,24 @@ export type ActionSettingDefinitions = Record<string, ActionValueSchema>;
 type VariantKeyUnion<T extends { variants: readonly { key: unknown }[] }> = T['variants'][number]['key'];
 
 // the types of the values that will be passed in for file/fileList/sequence/sequenceList type parameters
-// if withRevision is false, the value will just be the file's path (string)
-// if withRevision is true, it will be an object with 'path' and 'revision' strings
-// if (and only if) allowWorkingCopy is true, 'revision' may be null (working copy); omitted means false
+// if withRevision is not set, the value is just the file's path (string)
+// if withRevision is true, it is a FileRef: an object with 'path' and, unless it is the working copy, 'revision'
+// if allowWorkingCopy is false, 'revision' is always present (a revision must be chosen for every file)
 type FileInputValueType<T extends ActionValueSchemaFile | ActionValueSchemaSequence> = T extends {
   withRevision: true;
-  allowWorkingCopy: true;
+  allowWorkingCopy: false;
 }
-  ? FileRefNullableRevision
+  ? Required<FileRef>
   : T extends { withRevision: true }
     ? FileRef
     : string;
 
 type FileListInputValueType<T extends ActionValueSchemaFileList | ActionValueSchemaSequenceList> = T extends {
   withRevision: true;
-  allowWorkingCopy: true;
+  allowWorkingCopy: false;
 }
-  ? FileRefNullableRevision[]
-  : T extends { withRevision: true; allowWorkingCopy: false }
+  ? Required<FileRef>[]
+  : T extends { withRevision: true }
     ? FileRef[]
     : string[];
 
