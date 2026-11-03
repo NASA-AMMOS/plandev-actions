@@ -2,6 +2,7 @@ import type { ActionsAPI } from '../index';
 
 // parameter/setting schema types
 export * from './schema';
+export * from './workspace';
 
 export type ActionResult = {
   status: 'FAILED' | 'SUCCESS';
