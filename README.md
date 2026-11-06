@@ -2,6 +2,11 @@
 
 Javascript package for use with [PlanDev/SeqDev](https://nasa-ammos.github.io/plandev-docs/) actions.
 
+**See the [PlanDev/SeqDev Actions guide](https://nasa-ammos.github.io/plandev-docs/sequencing/actions/) for
+[using actions](https://nasa-ammos.github.io/plandev-docs/sequencing/actions/#using-actions) and
+[writing an action](https://nasa-ammos.github.io/plandev-docs/sequencing/actions/#writing-an-action).**
+
+
 ## PlanDev/SeqDev Rebrand
 
 This product was **formerly known as Aerie Actions and is now named PlanDev/SeqDev Actions**. What to know:
@@ -12,9 +17,5 @@ This product was **formerly known as Aerie Actions and is now named PlanDev/SeqD
 
 For the latest documentation, visit: [PlanDev Documentation](https://nasa-ammos.github.io/plandev-docs/)
 
-<span style="display:block;text-align:center">![Example](/docs/images/Full_Example.png)</span>
 
-See the [PlanDev/SeqDev Actions guide](https://nasa-ammos.github.io/plandev-docs/sequencing/actions/) for
-[using actions](https://nasa-ammos.github.io/plandev-docs/sequencing/actions/#using-actions) and
-[writing an action](https://nasa-ammos.github.io/plandev-docs/sequencing/actions/#writing-an-action).
 
